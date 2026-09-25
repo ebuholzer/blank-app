@@ -1,4 +1,24 @@
 import streamlit as st
+import pandas as pd
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import NearestNeighbors
+
+st.set_page_config(
+    page_title="TravelMatch",
+    page_icon="🌍",
+    layout="wide"
+)
+
+st.title("🌍 TravelMatch")
+
+st.write(
+    """
+    Diese App hilft dir dabei, ein passendes Reiseziel zu finden.
+    """
+)
+
+destinations = [import streamlit as st
 
 destinations = [
 
