@@ -31,14 +31,8 @@
 # 1. BIBLIOTHEKEN IMPORTIEREN
 # ------------------------------------------------------------
 
-# Streamlit wird für die Weboberfläche verwendet.
 import streamlit as st
-
-# pandas wird verwendet, um die Reisedaten als Tabelle
-# zu verarbeiten.
 import pandas as pd
-
-# math wird für mathematische Berechnungen verwendet.
 import math
 
 
@@ -70,33 +64,10 @@ st.write(
 # ------------------------------------------------------------
 # 4. REISEZIEL-DATEN
 # ------------------------------------------------------------
-#
-# Jede Zeile enthält:
-#
-# Land
-# Region
-# geschätzte Tageskosten
-# Temperaturen Januar bis Dezember
-# Strand-Bewertung
-# Kultur-Bewertung
-# Essen-Bewertung
-# Natur-Bewertung
-# Nightlife-Bewertung
-#
-# Bewertungen:
-# 1 = wenig geeignet
-# 5 = sehr gut geeignet
-#
-# Hinweis:
-# Die Werte sind vereinfachte Beispieldaten.
-# ------------------------------------------------------------
 
 destinations = [
 
-    # ==========================
     # EUROPA
-    # ==========================
-
     ["Portugal", "Europe", 90, 15, 16, 18, 19, 22, 25, 28, 28, 26, 22, 18, 16, 5, 4, 5, 4, 4],
     ["Spain", "Europe", 100, 12, 13, 16, 18, 22, 27, 30, 30, 26, 21, 16, 13, 5, 5, 5, 4, 5],
     ["Italy", "Europe", 110, 8, 10, 13, 17, 21, 25, 28, 28, 24, 19, 13, 9, 4, 5, 5, 4, 4],
@@ -123,10 +94,7 @@ destinations = [
     ["Malta", "Europe", 95, 13, 13, 15, 18, 22, 26, 29, 29, 26, 23, 18, 15, 5, 4, 4, 3, 4],
     ["Cyprus", "Europe", 95, 12, 13, 16, 20, 24, 28, 31, 31, 28, 24, 19, 14, 5, 4, 4, 4, 4],
 
-    # ==========================
     # AUSSERHALB EUROPAS
-    # ==========================
-
     ["Thailand", "Outside Europe", 55, 28, 29, 30, 30, 29, 29, 28, 28, 28, 28, 28, 27, 5, 5, 5, 5, 5],
     ["Vietnam", "Outside Europe", 50, 21, 22, 24, 27, 29, 30, 30, 29, 28, 26, 24, 21, 5, 5, 5, 5, 4],
     ["Indonesia", "Outside Europe", 55, 27, 27, 27, 28, 28, 27, 27, 27, 27, 28, 28, 27, 5, 4, 5, 5, 4],
@@ -156,7 +124,7 @@ destinations = [
 
 
 # ------------------------------------------------------------
-# 5. SPALTENNAMEN DEFINIEREN
+# 5. SPALTENNAMEN
 # ------------------------------------------------------------
 
 columns = [
@@ -184,7 +152,7 @@ columns = [
 
 
 # ------------------------------------------------------------
-# 6. DATEN ALS TABELLE SPEICHERN
+# 6. DATEN IN EIN DATAFRAME UMWANDELN
 # ------------------------------------------------------------
 
 df = pd.DataFrame(
@@ -194,7 +162,7 @@ df = pd.DataFrame(
 
 
 # ------------------------------------------------------------
-# 7. NUTZEREINGABEN
+# 7. REISEDATEN ABFRAGEN
 # ------------------------------------------------------------
 
 st.header("1. Reisedaten")
@@ -255,20 +223,21 @@ with col2:
         "Welche Temperatur möchtest du ungefähr?",
         min_value=-5,
         max_value=35,
-        value=25,
-        unit=" °C"
+        value=25
+    )
+
+    st.write(
+        f"Gewünschte Temperatur: {desired_temperature} °C"
     )
 
 
 # ------------------------------------------------------------
-# 8. INTERESSEN
+# 8. INTERESSEN ABFRAGEN
 # ------------------------------------------------------------
 
 st.header("2. Was möchtest du im Urlaub machen?")
 
-st.write(
-    "1 = unwichtig | 5 = sehr wichtig"
-)
+st.write("1 = unwichtig | 5 = sehr wichtig")
 
 interest_col1, interest_col2, interest_col3 = st.columns(3)
 
@@ -318,7 +287,7 @@ with interest_col3:
 
 
 # ------------------------------------------------------------
-# 9. BUTTON STARTET DIE EMPFEHLUNG
+# 9. EMPFEHLUNG STARTEN
 # ------------------------------------------------------------
 
 if st.button(
@@ -326,17 +295,10 @@ if st.button(
     type="primary"
 ):
 
-    # --------------------------------------------------------
-    # 9.1 DATEN KOPIEREN
-    # --------------------------------------------------------
-
+    # Daten kopieren
     filtered_df = df.copy()
 
-
-    # --------------------------------------------------------
-    # 9.2 REGION FILTERN
-    # --------------------------------------------------------
-
+    # Region filtern
     if region == "Europe":
 
         filtered_df = filtered_df[
@@ -350,26 +312,17 @@ if st.button(
         ]
 
 
-    # --------------------------------------------------------
-    # 9.3 TEMPERATUR DES GEWÄHLTEN MONATS
-    # --------------------------------------------------------
-
+    # Temperatur des gewählten Monats übernehmen
     filtered_df["temperature"] = filtered_df[month]
 
 
-    # --------------------------------------------------------
-    # 9.4 GESCHÄTZTE KOSTEN VOR ORT
-    # --------------------------------------------------------
-
+    # Geschätzte Kosten vor Ort berechnen
     filtered_df["estimated_cost"] = (
         filtered_df["daily_cost"] * days
     )
 
 
-    # --------------------------------------------------------
-    # 9.5 USER-PROFIL ERSTELLEN
-    # --------------------------------------------------------
-
+    # Nutzerprofil erstellen
     budget_per_day = budget / days
 
     user_values = {
@@ -383,10 +336,7 @@ if st.button(
     }
 
 
-    # --------------------------------------------------------
-    # 9.6 FEATURES FÜR DEN VERGLEICH
-    # --------------------------------------------------------
-
+    # Vergleichsmerkmale
     features = [
         "daily_cost",
         "temperature",
@@ -399,21 +349,14 @@ if st.button(
 
 
     # --------------------------------------------------------
-    # 9.7 STANDARDISIERUNG
+    # 10. STANDARDISIERUNG
     # --------------------------------------------------------
     #
-    # Die Features haben verschiedene Grössenordnungen.
-    #
-    # Beispiel:
-    # Tageskosten: 40 bis 180
-    # Bewertungen: 1 bis 5
-    #
-    # Deshalb werden die Werte standardisiert.
+    # Unterschiedliche Skalen werden vergleichbar gemacht.
     # --------------------------------------------------------
 
     means = {}
     standard_deviations = {}
-
 
     for feature in features:
 
@@ -430,64 +373,44 @@ if st.button(
             variance
         )
 
-        # Verhindert Division durch 0
         if standard_deviation == 0:
             standard_deviation = 1
 
         means[feature] = mean
-
-        standard_deviations[feature] = (
-            standard_deviation
-        )
+        standard_deviations[feature] = standard_deviation
 
 
     # --------------------------------------------------------
-    # 9.8 DISTANZ ZU JEDEM LAND BERECHNEN
-    # --------------------------------------------------------
-    #
-    # Kleine Distanz = hohe Ähnlichkeit.
-    #
-    # Verwendet wird die euklidische Distanz.
+    # 11. DISTANZ ZU JEDEM LAND BERECHNEN
     # --------------------------------------------------------
 
     results = []
-
 
     for index, country in filtered_df.iterrows():
 
         squared_distance = 0
 
-
         for feature in features:
 
-            # Standardisierter Wert des Landes
             country_standardized = (
                 country[feature] -
                 means[feature]
             ) / standard_deviations[feature]
 
-
-            # Standardisierter Wert des Nutzers
             user_standardized = (
                 user_values[feature] -
                 means[feature]
             ) / standard_deviations[feature]
 
-
-            # Differenz quadrieren
             squared_distance += (
                 country_standardized -
                 user_standardized
             ) ** 2
 
-
-        # Quadratwurzel ergibt die euklidische Distanz
         distance = math.sqrt(
             squared_distance
         )
 
-
-        # Ergebnis speichern
         results.append(
             {
                 "index": index,
@@ -496,22 +419,18 @@ if st.button(
         )
 
 
-    # --------------------------------------------------------
-    # 9.9 LÄNDER NACH ÄHNLICHKEIT SORTIEREN
-    # --------------------------------------------------------
-
+    # Ergebnisse nach Ähnlichkeit sortieren
     results = sorted(
         results,
         key=lambda x: x["distance"]
     )
 
-
-    # Nur die fünf besten Ergebnisse anzeigen
+    # Nur die besten fünf
     results = results[:5]
 
 
     # --------------------------------------------------------
-    # 10. ERGEBNISSE ANZEIGEN
+    # 12. ERGEBNISSE ANZEIGEN
     # --------------------------------------------------------
 
     st.divider()
@@ -520,27 +439,15 @@ if st.button(
         "🌎 Deine besten Reiseziele"
     )
 
-
     for ranking, item in enumerate(results):
 
         index = item["index"]
-
         distance = item["distance"]
 
         result = filtered_df.loc[index]
 
 
-        # ----------------------------------------------------
-        # MATCH SCORE
-        # ----------------------------------------------------
-        #
-        # Dieser Prozentwert dient nur als verständliche
-        # Darstellung der Distanz.
-        #
-        # Es handelt sich NICHT um eine statistische
-        # Wahrscheinlichkeit.
-        # ----------------------------------------------------
-
+        # Match Score nur zur verständlichen Darstellung
         match_score = max(
             0,
             min(
@@ -552,28 +459,18 @@ if st.button(
         )
 
 
-        # ----------------------------------------------------
-        # LAND ANZEIGEN
-        # ----------------------------------------------------
-
         st.subheader(
             f"{ranking + 1}. {result['country']}"
         )
-
 
         st.progress(
             match_score / 100
         )
 
-
         st.write(
             f"**Match Score: {match_score}%**"
         )
 
-
-        # ----------------------------------------------------
-        # KENNZAHLEN
-        # ----------------------------------------------------
 
         result_col1, result_col2, result_col3 = st.columns(3)
 
@@ -602,14 +499,9 @@ if st.button(
             )
 
 
-        # ----------------------------------------------------
-        # INTERESSEN
-        # ----------------------------------------------------
-
         st.write(
             "**Eignung für Aktivitäten:**"
         )
-
 
         st.write(
             f"""
@@ -622,10 +514,7 @@ if st.button(
         )
 
 
-        # ----------------------------------------------------
-        # BUDGETPRÜFUNG
-        # ----------------------------------------------------
-
+        # Budgetprüfung
         if result["estimated_cost"] > budget:
 
             st.warning(
@@ -651,18 +540,17 @@ if st.button(
 
 
 # ------------------------------------------------------------
-# 11. METHODISCHER HINWEIS
+# 13. METHODISCHER HINWEIS
 # ------------------------------------------------------------
 
 st.caption(
     """
     Methodischer Hinweis:
     Die App verwendet einen similarity-basierten
-    Nearest-Neighbor-Ansatz. Dazu werden die Eigenschaften
-    der Länder standardisiert und mit dem Nutzerprofil
-    verglichen. Die Länder mit der kleinsten euklidischen
-    Distanz werden empfohlen. Die verwendeten Reisedaten
-    sind vereinfachte Beispieldaten und keine Live-Daten.
+    Nearest-Neighbor-Ansatz. Die Eigenschaften der Länder
+    werden standardisiert und mit dem Nutzerprofil verglichen.
+    Die Länder mit der kleinsten euklidischen Distanz werden
+    empfohlen. Die Reisedaten sind vereinfachte Beispieldaten.
     Der Match Score ist keine statistische Wahrscheinlichkeit.
     """
 )
