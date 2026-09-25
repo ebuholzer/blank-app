@@ -1,36 +1,29 @@
 # ============================================================
-# TRAVELMATCH - MACHINE LEARNING TRAVEL RECOMMENDER
+# TRAVELMATCH - EINFACHER REISEZIEL-RECOMMENDER
 # ============================================================
 #
-# Diese App empfiehlt passende Reiseziele anhand von:
+# Ziel der App:
+# Die App empfiehlt passende Reiseziele anhand von:
 # - Reisemonat
 # - Reisedauer
 # - Budget
-# - gewünschter Region
+# - Region
 # - gewünschter Temperatur
-# - Interessen / Aktivitäten
+# - Interessen
 #
-# Machine-Learning-Methode:
-# Nearest Neighbors
+# Technische Idee:
+# Für jedes Land wird berechnet, wie ähnlich es den
+# Nutzerwünschen ist.
 #
-# Idee:
-# Jedes Land besitzt Eigenschaften, z.B.:
-# - Tageskosten
-# - Temperatur im gewählten Monat
-# - Eignung für Strand
-# - Kultur
-# - Essen
-# - Natur
-# - Nightlife
+# Je kleiner die berechnete Distanz, desto besser passt
+# das Land zum Nutzerprofil.
 #
-# Das Nutzerprofil wird mit diesen Ländern verglichen.
-# Das Modell sucht diejenigen Länder, deren Eigenschaften
-# den eingegebenen Wünschen am ähnlichsten sind.
+# Das Verfahren basiert auf dem Prinzip von
+# "Nearest Neighbors".
 #
 # WICHTIG:
-# Die Länderwerte sind vereinfachte Beispieldaten für
-# ein Studien-/Demonstrationsprojekt.
-# Sie sind keine Live-Reisedaten.
+# Die Reisedaten sind vereinfachte Beispieldaten.
+# Sie dienen nur zu Demonstrationszwecken.
 # ============================================================
 
 
@@ -38,23 +31,19 @@
 # 1. BIBLIOTHEKEN IMPORTIEREN
 # ------------------------------------------------------------
 
-# Streamlit erzeugt die Benutzeroberfläche der Web-App.
+# Streamlit wird für die Weboberfläche verwendet.
 import streamlit as st
 
-# pandas wird verwendet, um die Länderdaten tabellarisch
-# zu speichern und zu verarbeiten.
+# pandas wird verwendet, um die Reisedaten als Tabelle
+# zu verarbeiten.
 import pandas as pd
 
-# StandardScaler bringt unterschiedliche Zahlenbereiche
-# auf eine vergleichbare Skala.
-from sklearn.preprocessing import StandardScaler
-
-# NearestNeighbors sucht nach ähnlichen Datenpunkten.
-from sklearn.neighbors import NearestNeighbors
+# math wird für mathematische Berechnungen verwendet.
+import math
 
 
 # ------------------------------------------------------------
-# 2. STREAMLIT-SEITE KONFIGURIEREN
+# 2. STREAMLIT-SEITE EINRICHTEN
 # ------------------------------------------------------------
 
 st.set_page_config(
@@ -82,27 +71,23 @@ st.write(
 # 4. REISEZIEL-DATEN
 # ------------------------------------------------------------
 #
-# Struktur jeder Zeile:
+# Jede Zeile enthält:
 #
-# [
-#   Land,
-#   Region,
-#   Tageskosten,
-#   Temperatur Jan,
-#   Temperatur Feb,
-#   ...
-#   Temperatur Dez,
-#   Strand,
-#   Kultur,
-#   Essen,
-#   Natur,
-#   Nightlife
-# ]
+# Land
+# Region
+# geschätzte Tageskosten
+# Temperaturen Januar bis Dezember
+# Strand-Bewertung
+# Kultur-Bewertung
+# Essen-Bewertung
+# Natur-Bewertung
+# Nightlife-Bewertung
 #
-# Aktivitäten:
+# Bewertungen:
 # 1 = wenig geeignet
 # 5 = sehr gut geeignet
 #
+# Hinweis:
 # Die Werte sind vereinfachte Beispieldaten.
 # ------------------------------------------------------------
 
@@ -199,7 +184,7 @@ columns = [
 
 
 # ------------------------------------------------------------
-# 6. DATEN IN PANDAS-DATAFRAME UMWANDELN
+# 6. DATEN ALS TABELLE SPEICHERN
 # ------------------------------------------------------------
 
 df = pd.DataFrame(
@@ -276,12 +261,14 @@ with col2:
 
 
 # ------------------------------------------------------------
-# 8. INTERESSEN ABFRAGEN
+# 8. INTERESSEN
 # ------------------------------------------------------------
 
 st.header("2. Was möchtest du im Urlaub machen?")
 
-st.write("1 = unwichtig | 5 = sehr wichtig")
+st.write(
+    "1 = unwichtig | 5 = sehr wichtig"
+)
 
 interest_col1, interest_col2, interest_col3 = st.columns(3)
 
@@ -331,7 +318,7 @@ with interest_col3:
 
 
 # ------------------------------------------------------------
-# 9. BERECHNUNG STARTET NACH BUTTON-KLICK
+# 9. BUTTON STARTET DIE EMPFEHLUNG
 # ------------------------------------------------------------
 
 if st.button(
@@ -364,19 +351,14 @@ if st.button(
 
 
     # --------------------------------------------------------
-    # 9.3 TEMPERATUR DES GEWÄHLTEN MONATS AUSWÄHLEN
+    # 9.3 TEMPERATUR DES GEWÄHLTEN MONATS
     # --------------------------------------------------------
 
     filtered_df["temperature"] = filtered_df[month]
 
 
     # --------------------------------------------------------
-    # 9.4 GESCHÄTZTE KOSTEN VOR ORT BERECHNEN
-    # --------------------------------------------------------
-    #
-    # Tageskosten * Anzahl Tage
-    #
-    # Flugkosten sind NICHT enthalten.
+    # 9.4 GESCHÄTZTE KOSTEN VOR ORT
     # --------------------------------------------------------
 
     filtered_df["estimated_cost"] = (
@@ -385,7 +367,24 @@ if st.button(
 
 
     # --------------------------------------------------------
-    # 9.5 MACHINE-LEARNING-MERKMALE
+    # 9.5 USER-PROFIL ERSTELLEN
+    # --------------------------------------------------------
+
+    budget_per_day = budget / days
+
+    user_values = {
+        "daily_cost": budget_per_day,
+        "temperature": desired_temperature,
+        "beach": beach,
+        "culture": culture,
+        "food": food,
+        "nature": nature,
+        "nightlife": nightlife
+    }
+
+
+    # --------------------------------------------------------
+    # 9.6 FEATURES FÜR DEN VERGLEICH
     # --------------------------------------------------------
 
     features = [
@@ -400,106 +399,115 @@ if st.button(
 
 
     # --------------------------------------------------------
-    # 9.6 DATEN FÜR DAS MODELL
+    # 9.7 STANDARDISIERUNG
     # --------------------------------------------------------
-
-    X = filtered_df[features]
-
-
-    # --------------------------------------------------------
-    # 9.7 DATEN STANDARDISIEREN
-    # --------------------------------------------------------
+    #
+    # Die Features haben verschiedene Grössenordnungen.
     #
     # Beispiel:
+    # Tageskosten: 40 bis 180
+    # Bewertungen: 1 bis 5
     #
-    # daily_cost kann 40 bis 180 sein
-    # beach dagegen nur 1 bis 5
-    #
-    # Ohne Standardisierung hätte daily_cost
-    # mathematisch viel mehr Gewicht.
-    #
-    # Deshalb werden alle Features auf eine
-    # vergleichbare Skala gebracht.
+    # Deshalb werden die Werte standardisiert.
     # --------------------------------------------------------
 
-    scaler = StandardScaler()
+    means = {}
+    standard_deviations = {}
 
-    X_scaled = scaler.fit_transform(X)
+
+    for feature in features:
+
+        values = filtered_df[feature].tolist()
+
+        mean = sum(values) / len(values)
+
+        variance = sum(
+            (value - mean) ** 2
+            for value in values
+        ) / len(values)
+
+        standard_deviation = math.sqrt(
+            variance
+        )
+
+        # Verhindert Division durch 0
+        if standard_deviation == 0:
+            standard_deviation = 1
+
+        means[feature] = mean
+
+        standard_deviations[feature] = (
+            standard_deviation
+        )
 
 
     # --------------------------------------------------------
-    # 9.8 NUTZERPROFIL ERSTELLEN
+    # 9.8 DISTANZ ZU JEDEM LAND BERECHNEN
+    # --------------------------------------------------------
+    #
+    # Kleine Distanz = hohe Ähnlichkeit.
+    #
+    # Verwendet wird die euklidische Distanz.
     # --------------------------------------------------------
 
-    budget_per_day = budget / days
+    results = []
 
 
-    user_data = pd.DataFrame(
-        [
+    for index, country in filtered_df.iterrows():
+
+        squared_distance = 0
+
+
+        for feature in features:
+
+            # Standardisierter Wert des Landes
+            country_standardized = (
+                country[feature] -
+                means[feature]
+            ) / standard_deviations[feature]
+
+
+            # Standardisierter Wert des Nutzers
+            user_standardized = (
+                user_values[feature] -
+                means[feature]
+            ) / standard_deviations[feature]
+
+
+            # Differenz quadrieren
+            squared_distance += (
+                country_standardized -
+                user_standardized
+            ) ** 2
+
+
+        # Quadratwurzel ergibt die euklidische Distanz
+        distance = math.sqrt(
+            squared_distance
+        )
+
+
+        # Ergebnis speichern
+        results.append(
             {
-                "daily_cost": budget_per_day,
-                "temperature": desired_temperature,
-                "beach": beach,
-                "culture": culture,
-                "food": food,
-                "nature": nature,
-                "nightlife": nightlife
+                "index": index,
+                "distance": distance
             }
-        ]
+        )
+
+
+    # --------------------------------------------------------
+    # 9.9 LÄNDER NACH ÄHNLICHKEIT SORTIEREN
+    # --------------------------------------------------------
+
+    results = sorted(
+        results,
+        key=lambda x: x["distance"]
     )
 
 
-    # --------------------------------------------------------
-    # 9.9 NUTZERDATEN EBENFALLS STANDARDISIEREN
-    # --------------------------------------------------------
-
-    user_scaled = scaler.transform(
-        user_data
-    )
-
-
-    # --------------------------------------------------------
-    # 9.10 ANZAHL EMPFEHLUNGEN FESTLEGEN
-    # --------------------------------------------------------
-
-    number_results = min(
-        5,
-        len(filtered_df)
-    )
-
-
-    # --------------------------------------------------------
-    # 9.11 NEAREST-NEIGHBORS-MODELL ERSTELLEN
-    # --------------------------------------------------------
-    #
-    # Euclidean Distance:
-    #
-    # Das Modell berechnet die mathematische Distanz
-    # zwischen dem Nutzerprofil und allen Ländern.
-    #
-    # Je kleiner die Distanz,
-    # desto ähnlicher ist das Land dem Nutzerprofil.
-    # --------------------------------------------------------
-
-    model = NearestNeighbors(
-        n_neighbors=number_results,
-        metric="euclidean"
-    )
-
-
-    # Modell mit den vorhandenen Länderprofilen fitten
-    model.fit(
-        X_scaled
-    )
-
-
-    # --------------------------------------------------------
-    # 9.12 ÄHNLICHSTE LÄNDER BERECHNEN
-    # --------------------------------------------------------
-
-    distances, indices = model.kneighbors(
-        user_scaled
-    )
+    # Nur die fünf besten Ergebnisse anzeigen
+    results = results[:5]
 
 
     # --------------------------------------------------------
@@ -513,23 +521,24 @@ if st.button(
     )
 
 
-    # Schleife durch die fünf ähnlichsten Länder
-    for ranking, index in enumerate(
-        indices[0]
-    ):
+    for ranking, item in enumerate(results):
 
-        result = filtered_df.iloc[index]
+        index = item["index"]
 
-        distance = distances[0][ranking]
+        distance = item["distance"]
+
+        result = filtered_df.loc[index]
 
 
         # ----------------------------------------------------
-        # MATCH-SCORE
+        # MATCH SCORE
         # ----------------------------------------------------
         #
-        # Dieser Score dient nur der Darstellung.
+        # Dieser Prozentwert dient nur als verständliche
+        # Darstellung der Distanz.
         #
-        # Er ist KEINE statistische Wahrscheinlichkeit.
+        # Es handelt sich NICHT um eine statistische
+        # Wahrscheinlichkeit.
         # ----------------------------------------------------
 
         match_score = max(
@@ -544,16 +553,18 @@ if st.button(
 
 
         # ----------------------------------------------------
-        # LAND UND RANKING
+        # LAND ANZEIGEN
         # ----------------------------------------------------
 
         st.subheader(
             f"{ranking + 1}. {result['country']}"
         )
 
+
         st.progress(
             match_score / 100
         )
+
 
         st.write(
             f"**Match Score: {match_score}%**"
@@ -561,7 +572,7 @@ if st.button(
 
 
         # ----------------------------------------------------
-        # HAUPTINFORMATIONEN
+        # KENNZAHLEN
         # ----------------------------------------------------
 
         result_col1, result_col2, result_col3 = st.columns(3)
@@ -586,18 +597,19 @@ if st.button(
         with result_col3:
 
             st.metric(
-                "💵 Tagesbudget",
+                "💵 Tageskosten",
                 f"CHF {result['daily_cost']:.0f}"
             )
 
 
         # ----------------------------------------------------
-        # INTERESSEN DES LANDES
+        # INTERESSEN
         # ----------------------------------------------------
 
         st.write(
-            "**Eignung für deine Interessen:**"
+            "**Eignung für Aktivitäten:**"
         )
+
 
         st.write(
             f"""
@@ -611,7 +623,7 @@ if st.button(
 
 
         # ----------------------------------------------------
-        # BUDGET CHECK
+        # BUDGETPRÜFUNG
         # ----------------------------------------------------
 
         if result["estimated_cost"] > budget:
@@ -645,12 +657,12 @@ if st.button(
 st.caption(
     """
     Methodischer Hinweis:
-    TravelMatch verwendet einen Nearest-Neighbors-Ansatz.
-    Die Länder werden anhand numerischer Eigenschaften mit dem
-    Nutzerprofil verglichen. Die Destinationen mit der geringsten
-    Distanz werden empfohlen. Die verwendeten Reiseinformationen
+    Die App verwendet einen similarity-basierten
+    Nearest-Neighbor-Ansatz. Dazu werden die Eigenschaften
+    der Länder standardisiert und mit dem Nutzerprofil
+    verglichen. Die Länder mit der kleinsten euklidischen
+    Distanz werden empfohlen. Die verwendeten Reisedaten
     sind vereinfachte Beispieldaten und keine Live-Daten.
-    Der dargestellte Match Score ist keine statistische
-    Wahrscheinlichkeit.
+    Der Match Score ist keine statistische Wahrscheinlichkeit.
     """
 )
