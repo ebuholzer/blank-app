@@ -1,3 +1,14 @@
-streamlit
-pandas
-scikit-learn
+
+# Streamlit erzeugt die Benutzeroberfläche der Web-App.
+import streamlit as st
+
+# pandas wird verwendet, um die Länderdaten tabellarisch
+# zu speichern und zu verarbeiten.
+import pandas as pd
+
+# StandardScaler bringt unterschiedliche Zahlenbereiche
+# auf eine vergleichbare Skala.
+from sklearn.preprocessing import StandardScaler
+
+# NearestNeighbors sucht nach ähnlichen Datenpunkten.
+from sklearn.neighbors import NearestNeighbors
