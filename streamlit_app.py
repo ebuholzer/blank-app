@@ -3,174 +3,79 @@
 # Reiseziel-Empfehlung mit Similarity-/Nearest-Neighbor-Prinzip
 # ============================================================
 
+
 # ------------------------------------------------------------
 # 1. BIBLIOTHEKEN IMPORTIEREN
 # ------------------------------------------------------------
 
-# Streamlit wird benötigt, um die Web-App zu erstellen.
+# Streamlit wird verwendet, um die Web-App aufzubauen.
 import streamlit as st
 
-# math wird für mathematische Berechnungen benötigt.
+# math wird für die Berechnung der euklidischen Distanz benötigt.
 import math
 
-# json wird verwendet, um Wetterdaten aus der API zu lesen.
+# json wird benötigt, um die Antwort der Wetter-API zu lesen.
 import json
 
-# urlopen ermöglicht HTTP-Anfragen an eine externe API.
+# urlopen ermöglicht den Zugriff auf die Open-Meteo API.
 from urllib.request import urlopen
 
-# urlencode wandelt Parameter in eine gültige URL um.
+# urlencode wandelt unsere API-Parameter in eine gültige URL um.
 from urllib.parse import urlencode
 
 
 # ============================================================
-# 2. STREAMLIT-SEITE KONFIGURIEREN
+# 2. SEITE KONFIGURIEREN
 # ============================================================
 
-# Grundeinstellungen der Web-App definieren.
+# Grundeinstellungen der Streamlit-Seite.
 st.set_page_config(
-
-    # Titel im Browser-Tab.
+    # Titel im Browser.
     page_title="TravelMatch",
 
-    # Browser-Icon.
+    # Icon im Browser.
     page_icon="🌍",
 
-    # Breites Layout verwenden.
+    # Breiteres Layout.
     layout="wide"
 )
 
 
 # ============================================================
-# 3. EIGENES DESIGN MIT CSS
+# 3. ETWAS SCHÖNERES STREAMLIT-DESIGN
 # ============================================================
 #
-# Streamlit ist funktional, aber standardmässig relativ schlicht.
-# Mit CSS können wir Farben, Abstände, Karten und Buttons
-# visuell verbessern.
+# Wir verwenden nur wenig CSS.
+#
+# Anders als in der vorherigen Version werden die eigentlichen
+# Resultate NICHT mehr mit selbst geschriebenem HTML aufgebaut.
+#
+# Dadurch vermeiden wir, dass Streamlit HTML-Tags als Code anzeigt.
 # ============================================================
 
 st.markdown(
     """
     <style>
 
-    /* Gesamter Inhaltsbereich */
+    /* Begrenzung der maximalen Inhaltsbreite */
     .block-container {
         max-width: 1150px;
         padding-top: 2rem;
         padding-bottom: 4rem;
     }
 
-    /* Hero-Bereich oben */
-    .hero {
-        padding: 2.2rem 2.4rem;
-        border-radius: 24px;
-        background: linear-gradient(
-            135deg,
-            #f7f9fc 0%,
-            #eef3f8 100%
-        );
-        border: 1px solid #e5e9ef;
-        margin-bottom: 2rem;
-    }
-
-    /* Kleine obere Hero-Zeile */
-    .hero-label {
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Haupttitel im Hero */
-    .hero-title {
-        font-size: 3rem;
-        font-weight: 800;
-        line-height: 1.05;
-        margin-bottom: 0.7rem;
-        color: #111827;
-    }
-
-    /* Untertitel im Hero */
-    .hero-subtitle {
-        font-size: 1.1rem;
-        color: #4b5563;
-        max-width: 700px;
-        line-height: 1.6;
-    }
-
-    /* Karte für Resultate */
-    .result-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 22px;
-        padding: 1.4rem 1.5rem;
-        margin-bottom: 1.3rem;
-        background: white;
-    }
-
-    /* Land + Flagge */
-    .result-title {
-        font-size: 1.6rem;
-        font-weight: 800;
-        margin-bottom: 0.2rem;
-        color: #111827;
-    }
-
-    /* Repräsentativer Ort */
-    .result-subtitle {
-        color: #6b7280;
-        margin-bottom: 1rem;
-    }
-
-    /* Match Badge */
-    .match-badge {
-        display: inline-block;
-        padding: 0.35rem 0.7rem;
-        border-radius: 999px;
-        background: #eef2ff;
-        color: #3730a3;
-        font-weight: 700;
-        font-size: 0.9rem;
-        margin-bottom: 0.8rem;
-    }
-
-    /* Tags für Aktivitäten */
-    .tag {
-        display: inline-block;
-        padding: 0.3rem 0.55rem;
-        margin-right: 0.35rem;
-        margin-bottom: 0.35rem;
-        border-radius: 999px;
-        background: #f3f4f6;
-        color: #374151;
-        font-size: 0.88rem;
-        font-weight: 600;
-    }
-
-    /* Grüner Budgethinweis */
-    .budget-ok {
-        margin-top: 0.8rem;
-        padding: 0.75rem 0.9rem;
-        border-radius: 12px;
-        background: #ecfdf5;
-        color: #065f46;
-        font-weight: 600;
-    }
-
-    /* Abschnittstitel etwas kompakter */
-    h2, h3 {
-        margin-top: 1.2rem !important;
-    }
-
-    /* Primärbutton grösser */
+    /* Primärer Button */
     div.stButton > button {
         width: 100%;
+        min-height: 3.2rem;
         border-radius: 14px;
-        min-height: 3rem;
-        font-size: 1rem;
         font-weight: 700;
+        font-size: 1rem;
+    }
+
+    /* Etwas mehr Abstand zwischen Überschriften */
+    h1, h2, h3 {
+        margin-bottom: 0.6rem;
     }
 
     </style>
@@ -180,32 +85,31 @@ st.markdown(
 
 
 # ============================================================
-# 4. HERO-BEREICH
+# 4. TITEL
 # ============================================================
 
-# HTML-Block für einen moderneren Header.
+# Haupttitel der App.
+st.title("🌍 TravelMatch")
+
+# Untertitel.
 st.markdown(
     """
-    <div class="hero">
-        <div class="hero-label">Smart travel recommendation</div>
-        <div class="hero-title">🌍 TravelMatch</div>
-        <div class="hero-subtitle">
-            Finde Reiseziele, die zu deinem Budget, deinem Reisemonat,
-            deiner gewünschten Temperatur und deinen Interessen passen.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
+    ### Wohin soll deine nächste Reise gehen?
+
+    Wähle Budget, Reisezeit, Temperatur und deine Interessen.
+    TravelMatch vergleicht deine Wünsche mit 50 Reiseländern.
+    """
 )
+
+# Kleine Trennlinie.
+st.divider()
 
 
 # ============================================================
 # 5. DATENGRUNDLAGE
 # ============================================================
 #
-# Jedes Reiseziel wird als Dictionary gespeichert.
-#
-# Datenfelder:
+# Für jedes Land werden folgende Informationen gespeichert:
 #
 # land:
 # Deutscher Ländername.
@@ -217,51 +121,63 @@ st.markdown(
 # Europa oder ausserhalb Europas.
 #
 # ort:
-# Repräsentative touristische Destination.
+# Repräsentative Destination innerhalb des Landes.
 #
 # lat / lon:
-# Koordinaten dieses Ortes für die Wetter-API.
+# Koordinaten dieses Ortes.
+#
+# Sie werden für historische Wetterdaten verwendet.
 #
 # kosten:
-# Vereinfachte Tageskosten in CHF.
+# Vereinfachtes durchschnittliches Tagesbudget in CHF.
 #
-# strand, kultur, essen, natur, nightlife:
-# Heuristische Bewertungen von 1 bis 5.
+# strand / kultur / essen / natur / nightlife:
+# Bewertung zwischen 1 und 5.
 #
 #
-# HERLEITUNG DER RATINGS
+# ------------------------------------------------------------
+# HERLEITUNG DER AKTIVITÄTSFAKTOREN
 # ------------------------------------------------------------
 #
 # 1 = sehr geringe Eignung
 # 2 = eher geringe Eignung
-# 3 = durchschnittliche Eignung
+# 3 = mittlere Eignung
 # 4 = gute Eignung
 # 5 = sehr hohe Eignung
 #
-# Diese Bewertungen sind für den Prototyp manuell gesetzte
-# Heuristiken.
+# Diese Werte sind im Prototyp heuristisch gesetzt.
 #
 # Beispiel Thailand:
 #
 # Strand = 5
-# -> sehr viele bekannte Stranddestinationen
+# Begründung:
+# Thailand besitzt zahlreiche bekannte Strand- und
+# Inseldestinationen.
 #
 # Kultur = 5
-# -> Tempel, historische Orte, kulturelle Angebote
+# Begründung:
+# Tempel, historische Orte und starke kulturelle Angebote.
 #
 # Essen = 5
-# -> international bekannte und vielfältige Küche
+# Begründung:
+# Sehr bekannte und vielfältige lokale Küche.
 #
 # Natur = 5
-# -> Nationalparks, Inseln, Berge, tropische Landschaften
+# Begründung:
+# Nationalparks, Inseln, Berge und tropische Landschaften.
 #
 # Nightlife = 5
-# -> starkes Nachtleben in touristischen Zentren
+# Begründung:
+# Stark ausgeprägtes Nachtleben in mehreren Destinationen.
 #
 #
-# Die Werte sind keine objektiv gemessenen Kennzahlen.
-# In einer wissenschaftlich erweiterten Version könnten
-# sie später aus externen Datenquellen abgeleitet werden.
+# Die Werte sind keine objektiv gemessenen wissenschaftlichen
+# Kennzahlen.
+#
+# In einer weiterentwickelten Version könnten sie aus externen
+# Datenquellen wie Tourismusstatistiken, UNESCO-Daten,
+# Restaurantdaten, Nationalparkdaten oder Nutzerbewertungen
+# automatisiert abgeleitet werden.
 # ============================================================
 
 
@@ -269,6 +185,7 @@ st.markdown(
 # 6. REISEZIELE
 # ============================================================
 
+# Alle 50 Länder werden in einer Python-Liste gespeichert.
 reiseziele = [
 
     # --------------------------------------------------------
@@ -1033,10 +950,10 @@ reiseziele = [
 
 
 # ============================================================
-# 7. MONATE DEFINIEREN
+# 7. MONATE
 # ============================================================
 
-# Deutsche Monatsnamen mit Monatsnummern verknüpfen.
+# Monatsnamen werden in Monatsnummern übersetzt.
 monate = {
     "Januar": 1,
     "Februar": 2,
@@ -1054,182 +971,185 @@ monate = {
 
 
 # ============================================================
-# 8. HISTORISCHE TEMPERATURDATEN LADEN
+# 8. HISTORISCHE TEMPERATUR LADEN
 # ============================================================
 
-# Temperaturdaten werden 24 Stunden im Cache gespeichert.
+# Ergebnisse werden für 24 Stunden zwischengespeichert.
 @st.cache_data(ttl=86400)
 
-# Funktion zum Laden historischer Temperaturen.
+# Funktion zum Laden der historischen Temperatur.
 def lade_temperaturen(orte, monat_nummer):
 
-    # Alle Breitengrade sammeln.
+    # Breitengrade aller Orte verbinden.
     latitudes = ",".join(
         str(ort["lat"]) for ort in orte
     )
 
-    # Alle Längengrade sammeln.
+    # Längengrade aller Orte verbinden.
     longitudes = ",".join(
         str(ort["lon"]) for ort in orte
     )
 
-    # Parameter für die API definieren.
+    # Parameter für Open-Meteo festlegen.
     parameter = {
-
-        # Breitengrade.
         "latitude": latitudes,
-
-        # Längengrade.
         "longitude": longitudes,
 
-        # Historischer Startzeitpunkt.
+        # Betrachtet werden fünf vollständige Jahre.
         "start_date": "2021-01-01",
-
-        # Historischer Endzeitpunkt.
         "end_date": "2025-12-31",
 
-        # Tägliche Durchschnittstemperatur anfordern.
+        # Benötigt wird die tägliche Durchschnittstemperatur.
         "daily": "temperature_2m_mean",
 
-        # Lokale Zeitzone verwenden.
+        # Lokale Zeitzone.
         "timezone": "auto"
     }
 
-    # Basis-URL der Open-Meteo Historical Weather API.
+    # Basisadresse der API.
     basis_url = "https://archive-api.open-meteo.com/v1/archive?"
 
-    # Vollständige URL erzeugen.
+    # Parameter an URL anhängen.
     url = basis_url + urlencode(parameter)
 
-    # API abfragen.
+    # API aufrufen.
     with urlopen(url, timeout=30) as antwort:
 
-        # Antwort lesen und JSON in Python-Daten umwandeln.
+        # JSON-Antwort in Python umwandeln.
         daten = json.loads(
             antwort.read().decode("utf-8")
         )
 
-    # Falls nur ein einzelner Ort zurückgegeben wird,
-    # machen wir daraus eine Liste.
+    # Einzelnes Dictionary gegebenenfalls in Liste umwandeln.
     if isinstance(daten, dict):
         daten = [daten]
 
-    # Leeres Dictionary für Temperaturergebnisse.
+    # Hier werden die berechneten Temperaturen gespeichert.
     temperaturen = {}
 
-    # Orte und Wetterdaten gemeinsam durchlaufen.
+    # Jedes Land und seine Wetterdaten gemeinsam durchlaufen.
     for ort, wetter in zip(orte, daten):
 
-        # Alle Datumswerte laden.
+        # Liste aller Datumswerte.
         tage = wetter["daily"]["time"]
 
-        # Alle Temperaturwerte laden.
+        # Liste aller Temperaturen.
         werte = wetter["daily"]["temperature_2m_mean"]
 
-        # Hier sammeln wir nur Temperaturen des gewünschten Monats.
+        # Hier werden nur Werte des ausgewählten Monats gesammelt.
         passende_werte = []
 
-        # Datum und Temperatur parallel durchlaufen.
+        # Datum und Temperatur gleichzeitig durchlaufen.
         for datum, temperatur in zip(tage, werte):
 
             # Fehlende Werte überspringen.
             if temperatur is None:
                 continue
 
-            # Monat aus dem Datum extrahieren.
+            # Monat aus Datum extrahieren.
             datum_monat = int(
                 datum.split("-")[1]
             )
 
-            # Prüfen, ob dieser Tag zum gewünschten Monat gehört.
+            # Nur Werte des gewählten Monats behalten.
             if datum_monat == monat_nummer:
 
-                # Temperatur speichern.
                 passende_werte.append(
                     temperatur
                 )
 
-        # Nur fortfahren, wenn Werte vorhanden sind.
+        # Nur berechnen, wenn Daten vorhanden sind.
         if passende_werte:
 
-            # Durchschnitt berechnen.
+            # Durchschnitt bilden.
             durchschnitt = (
                 sum(passende_werte)
                 / len(passende_werte)
             )
 
-            # Durchschnitt auf eine Dezimalstelle runden.
+            # Ergebnis auf eine Nachkommastelle runden.
             temperaturen[ort["land"]] = round(
                 durchschnitt,
                 1
             )
 
-    # Temperaturen an den Hauptcode zurückgeben.
+    # Resultat zurückgeben.
     return temperaturen
 
 
 # ============================================================
-# 9. NUTZEREINGABEN
+# 9. REISEDATEN
 # ============================================================
 
-# Abschnittstitel anzeigen.
-st.subheader("1. Reisedaten")
+# Überschrift des ersten Formularbereichs.
+st.header("1. Deine Reise")
 
-# Drei Spalten für bessere Übersicht.
+# Drei Spalten erzeugen.
 col1, col2, col3 = st.columns(3)
 
 
 # ------------------------------------------------------------
-# ERSTE SPALTE
+# MONAT UND DAUER
 # ------------------------------------------------------------
 
 with col1:
 
-    # Monat auswählen.
+    # Reisemonat auswählen.
     monat_name = st.selectbox(
-        "Reisemonat",
+        "📅 Reisemonat",
         list(monate.keys())
     )
 
     # Reisedauer auswählen.
     tage = st.slider(
-        "Reisedauer in Tagen",
+        "🗓️ Reisedauer",
         min_value=3,
         max_value=30,
         value=10
     )
 
+    # Ausgewählten Wert erklären.
+    st.caption(
+        f"{tage} Tage"
+    )
+
 
 # ------------------------------------------------------------
-# ZWEITE SPALTE
+# BUDGET
 # ------------------------------------------------------------
 
 with col2:
 
-    # Maximales Budget auswählen.
+    # Budget auswählen.
     max_budget = st.slider(
-        "Maximalbudget vor Ort",
+        "💰 Budget pro Person",
         min_value=300,
         max_value=5000,
         value=1500,
         step=100
     )
 
-    # Zusatzinfo anzeigen.
+    # Budgetbetrag darstellen.
     st.caption(
-        f"Maximal CHF {max_budget} pro Person"
+        f"CHF {max_budget}"
+    )
+
+    # Der Nutzer entscheidet, ob das Budget ein Muss-Kriterium ist.
+    budget_muss = st.checkbox(
+        "Budget darf nicht überschritten werden",
+        value=True
     )
 
 
 # ------------------------------------------------------------
-# DRITTE SPALTE
+# REGION
 # ------------------------------------------------------------
 
 with col3:
 
     # Region auswählen.
     region = st.selectbox(
-        "Region",
+        "🌍 Region",
         [
             "Egal",
             "Europa",
@@ -1239,130 +1159,181 @@ with col3:
 
     # Wunschtemperatur auswählen.
     wunschtemperatur = st.slider(
-        "Wunschtemperatur",
+        "🌡️ Wunschtemperatur",
         min_value=-5,
         max_value=35,
         value=25
     )
 
-    # Temperaturwert zusätzlich darstellen.
+    # Wert darstellen.
     st.caption(
         f"Ungefähr {wunschtemperatur} °C"
     )
 
 
 # ============================================================
-# 10. STRAND ALS JA/NEIN-KRITERIUM
+# 10. TEMPERATUR ALS OPTIONALER HARTER FILTER
 # ============================================================
 
-# Neuer Abschnitt.
-st.subheader("2. Muss dein Reiseziel Strand haben?")
-
-# Auswahl statt 1-5-Slider.
-strand_ist_pflicht = st.radio(
-    "Strand",
-    [
-        "Egal",
-        "Ja, Strand muss vorhanden sein"
-    ],
-    horizontal=True
+# Der Nutzer kann entscheiden, ob die Temperatur nur eine
+# Präferenz oder eine zwingende Voraussetzung ist.
+temperatur_muss = st.checkbox(
+    "🌡️ Die Temperatur muss ungefähr meiner Wunschtemperatur entsprechen"
 )
+
+# Falls Temperatur zwingend ist, kann die Toleranz festgelegt werden.
+if temperatur_muss:
+
+    # Maximale erlaubte Abweichung einstellen.
+    temperatur_toleranz = st.slider(
+        "Erlaubte Temperaturabweichung",
+        min_value=1,
+        max_value=10,
+        value=4
+    )
+
+else:
+
+    # Standardwert für spätere Berechnung.
+    temperatur_toleranz = 4
 
 
 # ============================================================
 # 11. INTERESSEN
 # ============================================================
 
-# Abschnittstitel.
-st.subheader("3. Was ist dir im Urlaub wichtig?")
+# Neuer Abschnitt.
+st.header("2. Was ist dir im Urlaub wichtig?")
 
-# Kurze Erklärung.
+# Erklärung.
 st.caption(
-    "1 = wenig wichtig · 5 = sehr wichtig"
+    "Bewerte jedes Thema von 1 = unwichtig bis 5 = sehr wichtig."
 )
 
-# Vier Spalten für Interessen.
-i1, i2, i3, i4 = st.columns(4)
+# Fünf Spalten erstellen.
+i1, i2, i3, i4, i5 = st.columns(5)
 
+
+# ------------------------------------------------------------
+# STRAND
+# ------------------------------------------------------------
 
 with i1:
 
-    # Kulturpräferenz.
-    kultur = st.slider(
-        "🏛️ Kultur",
-        1,
-        5,
-        3
+    # Wichtigkeit von Strand.
+    strand = st.slider(
+        "🏖️ Strand",
+        min_value=1,
+        max_value=5,
+        value=3
     )
 
+    # Zusätzlich kann Strand zwingend sein.
+    strand_muss = st.checkbox(
+        "Strand muss vorhanden sein"
+    )
+
+
+# ------------------------------------------------------------
+# KULTUR
+# ------------------------------------------------------------
 
 with i2:
 
-    # Essenpräferenz.
-    essen = st.slider(
-        "🍜 Essen",
-        1,
-        5,
-        3
+    # Wichtigkeit von Kultur.
+    kultur = st.slider(
+        "🏛️ Kultur",
+        min_value=1,
+        max_value=5,
+        value=3
     )
 
+
+# ------------------------------------------------------------
+# ESSEN
+# ------------------------------------------------------------
 
 with i3:
 
-    # Naturpräferenz.
-    natur = st.slider(
-        "🌿 Natur",
-        1,
-        5,
-        3
+    # Wichtigkeit von Essen.
+    essen = st.slider(
+        "🍜 Essen",
+        min_value=1,
+        max_value=5,
+        value=3
     )
 
+
+# ------------------------------------------------------------
+# NATUR
+# ------------------------------------------------------------
 
 with i4:
 
-    # Nightlifepräferenz.
+    # Wichtigkeit von Natur.
+    natur = st.slider(
+        "🌿 Natur",
+        min_value=1,
+        max_value=5,
+        value=3
+    )
+
+
+# ------------------------------------------------------------
+# NIGHTLIFE
+# ------------------------------------------------------------
+
+with i5:
+
+    # Wichtigkeit von Nightlife.
     nightlife = st.slider(
         "🎉 Nightlife",
-        1,
-        5,
-        2
+        min_value=1,
+        max_value=5,
+        value=2
     )
+
+
+# Etwas Abstand vor dem Button.
+st.write("")
 
 
 # ============================================================
 # 12. EMPFEHLUNG STARTEN
 # ============================================================
 
-# Button erzeugen.
+# Erst nach Klick wird der Algorithmus ausgeführt.
 if st.button(
-    "✈️ Passende Reiseziele finden",
+    "✈️ Meine Reiseziele finden",
     type="primary"
 ):
 
-    # --------------------------------------------------------
-    # 12.1 ALLE REISEZIELE KOPIEREN
-    # --------------------------------------------------------
 
-    # Leere Kandidatenliste erstellen.
+    # ========================================================
+    # 12.1 DATEN KOPIEREN
+    # ========================================================
+
+    # Leere Liste für Kandidaten.
     kandidaten = []
 
     # Alle Länder durchlaufen.
     for ziel in reiseziele:
 
-        # Dictionary kopieren.
+        # Dictionary kopieren,
+        # damit die Originaldaten unverändert bleiben.
         kandidaten.append(
             ziel.copy()
         )
 
 
-    # --------------------------------------------------------
-    # 12.2 REGION ALS HARTES KRITERIUM
-    # --------------------------------------------------------
+    # ========================================================
+    # 12.2 REGION FILTERN
+    # ========================================================
 
-    # Nur filtern, wenn Nutzer nicht "Egal" gewählt hat.
+    # Falls eine konkrete Region gewählt wurde.
     if region != "Egal":
 
-        # Nur Länder der gewählten Region behalten.
+        # Nur Länder dieser Region behalten.
         kandidaten = [
             ziel
             for ziel in kandidaten
@@ -1370,50 +1341,64 @@ if st.button(
         ]
 
 
-    # --------------------------------------------------------
-    # 12.3 BUDGET ALS HARTES KRITERIUM
-    # --------------------------------------------------------
-    #
-    # Das Budget ist ein echtes Maximum.
-    # Reiseziele über dem Budget werden ausgeschlossen.
-    # --------------------------------------------------------
+    # ========================================================
+    # 12.3 GESAMTKOSTEN BERECHNEN
+    # ========================================================
 
-    # Leere Liste für bezahlbare Länder.
-    budget_kandidaten = []
-
-    # Kandidaten durchlaufen.
+    # Alle Länder durchlaufen.
     for ziel in kandidaten:
 
-        # Gesamtkosten vor Ort berechnen.
-        gesamtkosten = (
+        # Tageskosten mit Anzahl Tage multiplizieren.
+        ziel["gesamtkosten"] = (
             ziel["kosten"] * tage
         )
 
-        # Gesamtkosten im Dictionary speichern.
-        ziel["gesamtkosten"] = gesamtkosten
 
-        # Nur Länder innerhalb des Maximalbudgets übernehmen.
-        if gesamtkosten <= max_budget:
-
-            budget_kandidaten.append(
-                ziel
-            )
-
-    # Kandidaten aktualisieren.
-    kandidaten = budget_kandidaten
-
-
-    # --------------------------------------------------------
-    # 12.4 STRAND ALS JA/NEIN-FILTER
-    # --------------------------------------------------------
+    # ========================================================
+    # 12.4 BUDGET ALS OPTIONALER HARTER FILTER
+    # ========================================================
     #
-    # Wenn Strand zwingend ist, werden nur Länder
-    # mit Strandbewertung 4 oder 5 berücksichtigt.
-    # --------------------------------------------------------
+    # Wenn budget_muss = True:
+    #
+    # Länder über dem Budget werden vollständig ausgeschlossen.
+    #
+    # Wenn budget_muss = False:
+    #
+    # Länder dürfen auch etwas darüber liegen.
+    # Die Budgetabweichung wird später nur als Soft-Faktor
+    # in der Similarity-Berechnung berücksichtigt.
+    # ========================================================
 
-    if strand_ist_pflicht == "Ja, Strand muss vorhanden sein":
+    # Nur filtern, wenn Budget zwingend ist.
+    if budget_muss:
 
-        # Nur Länder mit guter bis sehr guter Strandeignung.
+        # Nur Länder innerhalb des Budgets behalten.
+        kandidaten = [
+            ziel
+            for ziel in kandidaten
+            if ziel["gesamtkosten"] <= max_budget
+        ]
+
+
+    # ========================================================
+    # 12.5 STRAND ALS OPTIONALER HARTER FILTER
+    # ========================================================
+    #
+    # Der Strand-Slider bleibt trotzdem bestehen.
+    #
+    # Beispiel:
+    #
+    # Slider = 5:
+    # Strand ist dem Nutzer sehr wichtig.
+    #
+    # Checkbox zusätzlich aktiviert:
+    # Länder ohne gute Strandeignung werden ausgeschlossen.
+    # ========================================================
+
+    # Nur filtern, falls Strand zwingend ist.
+    if strand_muss:
+
+        # Strand 4 oder 5 gilt als vorhandene gute Stranddestination.
         kandidaten = [
             ziel
             for ziel in kandidaten
@@ -1421,73 +1406,73 @@ if st.button(
         ]
 
 
-    # --------------------------------------------------------
-    # 12.5 PRÜFEN, OB NOCH KANDIDATEN VORHANDEN SIND
-    # --------------------------------------------------------
+    # ========================================================
+    # 12.6 PRÜFEN, OB NOCH LÄNDER VORHANDEN SIND
+    # ========================================================
 
-    # Falls kein Land übrig bleibt.
+    # Falls bereits keine Destination mehr übrig ist.
     if len(kandidaten) == 0:
 
-        # Verständliche Meldung anzeigen.
+        # Fehler anzeigen.
         st.error(
-            "Kein Reiseziel erfüllt aktuell deine harten Kriterien. "
-            "Erhöhe zum Beispiel dein Budget oder ändere die Region."
+            "Keine Destination erfüllt deine zwingenden Kriterien. "
+            "Versuche beispielsweise das Budget zu erhöhen."
         )
 
-        # Ausführung stoppen.
+        # Weitere Ausführung stoppen.
         st.stop()
 
 
-    # --------------------------------------------------------
-    # 12.6 TEMPERATURDATEN LADEN
-    # --------------------------------------------------------
+    # ========================================================
+    # 12.7 TEMPERATURDATEN LADEN
+    # ========================================================
 
-    # Monatsname in Monatsnummer umwandeln.
+    # Monatsnamen in Monatsnummer übersetzen.
     monat_nummer = monate[
         monat_name
     ]
 
-    # Spinner anzeigen, während API geladen wird.
+    # Spinner während API-Abfrage.
     with st.spinner(
         "🌡️ Klimadaten werden geladen..."
     ):
 
-        # Fehler sicher abfangen.
+        # API-Fehler abfangen.
         try:
 
-            # Temperaturdaten laden.
+            # Temperaturdaten abrufen.
             temperaturdaten = lade_temperaturen(
                 kandidaten,
                 monat_nummer
             )
 
-        # Falls die Wetter-API nicht funktioniert.
+        # Falls API-Aufruf fehlschlägt.
         except Exception:
 
             # Fehlermeldung anzeigen.
             st.error(
-                "Die historischen Wetterdaten konnten gerade "
-                "nicht geladen werden. Bitte versuche es erneut."
+                "Die Wetterdaten konnten gerade nicht geladen werden. "
+                "Bitte versuche es erneut."
             )
 
-            # Ausführung stoppen.
+            # Algorithmus stoppen.
             st.stop()
 
 
-    # --------------------------------------------------------
-    # 12.7 TEMPERATUREN DEN LÄNDERN ZUORDNEN
-    # --------------------------------------------------------
+    # ========================================================
+    # 12.8 TEMPERATUREN DEN LÄNDERN ZUORDNEN
+    # ========================================================
 
-    # Neue Liste erstellen.
+    # Neue Kandidatenliste.
     kandidaten_mit_temperatur = []
 
-    # Alle Kandidaten durchlaufen.
+    # Alle Länder durchlaufen.
     for ziel in kandidaten:
 
-        # Prüfen, ob Wetterdaten vorhanden sind.
+        # Nur Länder verwenden, für die Wetterdaten vorhanden sind.
         if ziel["land"] in temperaturdaten:
 
-            # Temperatur zum Land hinzufügen.
+            # Temperatur speichern.
             ziel["temperatur"] = temperaturdaten[
                 ziel["land"]
             ]
@@ -1497,23 +1482,38 @@ if st.button(
                 ziel
             )
 
-    # Kandidaten aktualisieren.
+    # Kandidaten ersetzen.
     kandidaten = kandidaten_mit_temperatur
 
 
-    # --------------------------------------------------------
-    # 12.8 PRÜFEN, OB WETTERDATEN VORHANDEN SIND
-    # --------------------------------------------------------
+    # ========================================================
+    # 12.9 TEMPERATUR OPTIONAL ALS HARD CONSTRAINT
+    # ========================================================
 
+    # Falls Temperatur zwingend ist.
+    if temperatur_muss:
+
+        # Länder ausserhalb der gewählten Toleranz entfernen.
+        kandidaten = [
+            ziel
+            for ziel in kandidaten
+            if abs(
+                ziel["temperatur"]
+                - wunschtemperatur
+            ) <= temperatur_toleranz
+        ]
+
+
+    # Falls danach nichts mehr vorhanden ist.
     if len(kandidaten) == 0:
 
-        # Fehlermeldung anzeigen.
+        # Hinweis anzeigen.
         st.error(
-            "Für die verbleibenden Reiseziele konnten "
-            "keine Wetterdaten geladen werden."
+            "Keine Destination erfüllt deine Kombination aus "
+            "Budget, Strand und Temperatur."
         )
 
-        # Ausführung stoppen.
+        # Algorithmus stoppen.
         st.stop()
 
 
@@ -1521,19 +1521,15 @@ if st.button(
     # 13. SIMILARITY-BERECHNUNG
     # ========================================================
     #
-    # Die harten Kriterien wurden bereits angewendet:
+    # Jetzt werden die verbliebenen Länder mathematisch
+    # mit dem Nutzerprofil verglichen.
     #
-    # - Region
+    #
+    # Faktoren:
+    #
     # - Budget
-    # - optional Strand
-    #
-    # Jetzt werden die verbleibenden Länder anhand ihrer
-    # Ähnlichkeit zum Nutzerprofil sortiert.
-    #
-    #
-    # VERWENDETE SOFT-FAKTOREN:
-    #
-    # - Wunschtemperatur
+    # - Temperatur
+    # - Strand
     # - Kultur
     # - Essen
     # - Natur
@@ -1543,83 +1539,91 @@ if st.button(
     # NORMALISIERUNG
     # --------------------------------------------------------
     #
-    # Aktivitäten liegen auf einer Skala von 1 bis 5.
+    # Aktivitätsratings liegen zwischen 1 und 5.
     #
     # Maximale Differenz:
     #
     # 5 - 1 = 4
     #
-    # Deshalb wird jede Differenz durch 4 geteilt.
+    # Deshalb teilen wir die Differenz durch 4.
     #
     #
-    # Beispiel:
+    # Temperatur:
     #
-    # Nutzer:
-    # Kultur = 5
+    # Differenz wird durch 20 geteilt.
     #
-    # Land:
-    # Kultur = 3
-    #
-    # Differenz:
-    # 2
-    #
-    # Normalisiert:
-    # 2 / 4 = 0.5
+    # 20 °C dienen im Prototyp als Referenzspanne.
     #
     #
-    # TEMPERATUR
-    # --------------------------------------------------------
+    # Budget:
     #
-    # Temperatur wird durch 20 geteilt.
+    # Differenz zwischen geschätzten Reisekosten und
+    # Nutzerbudget wird durch das Nutzerbudget geteilt.
     #
     # Beispiel:
     #
-    # Wunschtemperatur = 28 °C
-    # Land = 24 °C
+    # Budget = 2000 CHF
     #
-    # Differenz = 4 °C
+    # Reisekosten = 2200 CHF
     #
-    # Normalisiert:
+    # Differenz = 200 CHF
     #
-    # 4 / 20 = 0.20
+    # Normalisierte Differenz:
     #
-    #
-    # Der Wert 20 dient als Referenzspanne für eine
-    # deutlich wahrnehmbare Temperaturabweichung.
+    # 200 / 2000 = 0.10
     #
     #
-    # GEWICHTUNG
+    # HARD CONSTRAINTS
     # --------------------------------------------------------
     #
-    # Alle fünf Faktoren werden gleich gewichtet.
+    # Wenn Budget als zwingend markiert ist, wurden zu teure
+    # Länder bereits ausgeschlossen.
     #
-    # Es gibt bewusst keine versteckte Gewichtung.
+    # Trotzdem bleibt Budget zusätzlich Teil der Ähnlichkeit,
+    # damit beispielsweise eine Destination mit 1400 CHF
+    # besser zu einem Budget von 1500 CHF passt als eine
+    # Destination mit nur 400 CHF.
     #
     #
     # EUKLIDISCHE DISTANZ
     # --------------------------------------------------------
     #
-    # Distanz =
+    # Die normalisierten Abweichungen werden quadriert,
+    # addiert und daraus wird die Quadratwurzel gezogen.
     #
-    # sqrt(
-    #     Temperatur²
-    #     + Kultur²
-    #     + Essen²
-    #     + Natur²
-    #     + Nightlife²
-    # )
-    #
-    # Je kleiner die Distanz,
-    # desto besser passt das Reiseziel.
+    # Je kleiner die resultierende Distanz,
+    # desto ähnlicher ist das Land dem Nutzerprofil.
     # ========================================================
 
-    # Leere Ergebnisliste erstellen.
+    # Leere Ergebnisliste.
     ergebnisse = []
 
     # Alle Kandidaten durchlaufen.
     for ziel in kandidaten:
 
-        # Temperaturabweichung berechnen.
+
+        # ----------------------------------------------------
+        # BUDGET-DISTANZ
+        # ----------------------------------------------------
+
+        # Absolute Differenz zwischen Budget und Reisekosten.
+        budget_unterschied = abs(
+            ziel["gesamtkosten"]
+            - max_budget
+        )
+
+        # Differenz durch Nutzerbudget teilen.
+        budget_distanz = (
+            budget_unterschied
+            / max_budget
+        )
+
+
+        # ----------------------------------------------------
+        # TEMPERATUR-DISTANZ
+        # ----------------------------------------------------
+
+        # Abweichung von Wunschtemperatur normalisieren.
         temperatur_distanz = (
             abs(
                 ziel["temperatur"]
@@ -1628,7 +1632,26 @@ if st.button(
             / 20
         )
 
-        # Kulturabweichung berechnen.
+
+        # ----------------------------------------------------
+        # STRAND-DISTANZ
+        # ----------------------------------------------------
+
+        # Strandabweichung normalisieren.
+        strand_distanz = (
+            abs(
+                ziel["strand"]
+                - strand
+            )
+            / 4
+        )
+
+
+        # ----------------------------------------------------
+        # KULTUR-DISTANZ
+        # ----------------------------------------------------
+
+        # Kulturabweichung normalisieren.
         kultur_distanz = (
             abs(
                 ziel["kultur"]
@@ -1637,7 +1660,12 @@ if st.button(
             / 4
         )
 
-        # Essensabweichung berechnen.
+
+        # ----------------------------------------------------
+        # ESSEN-DISTANZ
+        # ----------------------------------------------------
+
+        # Essensabweichung normalisieren.
         essen_distanz = (
             abs(
                 ziel["essen"]
@@ -1646,7 +1674,12 @@ if st.button(
             / 4
         )
 
-        # Naturabweichung berechnen.
+
+        # ----------------------------------------------------
+        # NATUR-DISTANZ
+        # ----------------------------------------------------
+
+        # Naturabweichung normalisieren.
         natur_distanz = (
             abs(
                 ziel["natur"]
@@ -1655,7 +1688,12 @@ if st.button(
             / 4
         )
 
-        # Nightlifeabweichung berechnen.
+
+        # ----------------------------------------------------
+        # NIGHTLIFE-DISTANZ
+        # ----------------------------------------------------
+
+        # Nightlifeabweichung normalisieren.
         nightlife_distanz = (
             abs(
                 ziel["nightlife"]
@@ -1664,10 +1702,19 @@ if st.button(
             / 4
         )
 
-        # Euklidische Gesamtdistanz berechnen.
+
+        # ----------------------------------------------------
+        # EUKLIDISCHE GESAMTDISTANZ
+        # ----------------------------------------------------
+
+        # Alle Faktoren zusammenführen.
         distanz = math.sqrt(
 
-            temperatur_distanz ** 2
+            budget_distanz ** 2
+
+            + temperatur_distanz ** 2
+
+            + strand_distanz ** 2
 
             + kultur_distanz ** 2
 
@@ -1678,10 +1725,11 @@ if st.button(
             + nightlife_distanz ** 2
         )
 
+
         # Distanz im Dictionary speichern.
         ziel["distanz"] = distanz
 
-        # Land zur Ergebnisliste hinzufügen.
+        # Ergebnis speichern.
         ergebnisse.append(
             ziel
         )
@@ -1691,13 +1739,13 @@ if st.button(
     # 14. ERGEBNISSE SORTIEREN
     # ========================================================
 
-    # Länder nach Distanz sortieren.
+    # Kleinste Distanz zuerst.
     ergebnisse = sorted(
         ergebnisse,
         key=lambda ziel: ziel["distanz"]
     )
 
-    # Nur fünf beste Resultate verwenden.
+    # Nur die fünf besten Matches.
     ergebnisse = ergebnisse[:5]
 
 
@@ -1705,154 +1753,217 @@ if st.button(
     # 15. RESULTATE ANZEIGEN
     # ========================================================
 
-    # Abstand erzeugen.
-    st.markdown("## ✨ Deine besten Matches")
+    # Trennlinie.
+    st.divider()
 
-    # Ergebnisse durchlaufen.
+    # Überschrift.
+    st.header("✨ Deine besten Matches")
+
+
+    # Alle fünf Resultate durchlaufen.
     for position, ziel in enumerate(
         ergebnisse,
         start=1
     ):
 
+
         # ----------------------------------------------------
-        # MATCH SCORE BERECHNEN
+        # MATCH SCORE
         # --------------------------------------------------------
         #
-        # Der Match Score dient nur als verständliche
-        # Darstellung der mathematischen Distanz.
+        # Die mathematische Distanz ist für Nutzer schwer
+        # interpretierbar.
+        #
+        # Deshalb wird daraus ein Wert von 0 bis 100 erzeugt.
         #
         # Formel:
         #
         # 100 - Distanz × 30
         #
-        # Der Faktor 30 ist ein Darstellungsfaktor.
-        # Er wurde nicht statistisch trainiert.
+        # Der Faktor 30 ist nur ein Darstellungsfaktor.
+        #
+        # Er wurde nicht durch Machine Learning gelernt.
+        #
+        # Der Match Score ist deshalb keine statistische
+        # Wahrscheinlichkeit.
         # ----------------------------------------------------
 
         # Score berechnen.
         match_score = round(
             max(
                 0,
-                100 - ziel["distanz"] * 30
+                min(
+                    100,
+                    100 - ziel["distanz"] * 30
+                )
             )
         )
 
-        # Restbudget berechnen.
-        restbudget = (
-            max_budget
-            - ziel["gesamtkosten"]
-        )
 
         # ----------------------------------------------------
-        # RESULTAT-KARTE START
+        # RESULTAT ALS STREAMLIT-CONTAINER
+        # ----------------------------------------------------
+        #
+        # Hier verwenden wir bewusst KEIN eigenes HTML mehr.
+        #
+        # Dadurch kann Streamlit keine HTML-Tags als Code
+        # darstellen.
         # ----------------------------------------------------
 
-        st.markdown(
-            f"""
-            <div class="result-card">
+        # Container mit Rahmen erzeugen.
+        with st.container(border=True):
 
-                <div class="result-title">
-                    {position}. {ziel['flagge']} {ziel['land']}
-                </div>
+            # Flagge und Ländername gross darstellen.
+            st.subheader(
+                f"{position}. {ziel['flagge']} {ziel['land']}"
+            )
 
-                <div class="result-subtitle">
-                    Klimareferenz: {ziel['ort']}
-                </div>
+            # Referenzort anzeigen.
+            st.caption(
+                f"Klimareferenz: {ziel['ort']}"
+            )
 
-                <div class="match-badge">
-                    {match_score}% Match
-                </div>
+            # Match Score darstellen.
+            st.write(
+                f"**{match_score}% Match**"
+            )
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        # Fortschrittsbalken für Match Score.
-        st.progress(
-            match_score / 100
-        )
-
-        # Vier Kennzahlen nebeneinander.
-        r1, r2, r3, r4 = st.columns(4)
-
-
-        with r1:
-
-            # Temperatur darstellen.
-            st.metric(
-                f"🌡️ Ø {monat_name}",
-                f"{ziel['temperatur']} °C"
+            # Fortschrittsbalken.
+            st.progress(
+                match_score / 100
             )
 
 
-        with r2:
+            # ------------------------------------------------
+            # KENNZAHLEN
+            # ------------------------------------------------
 
-            # Gesamtkosten darstellen.
-            st.metric(
-                "💰 Kosten vor Ort",
-                f"CHF {ziel['gesamtkosten']}"
-            )
-
-
-        with r3:
-
-            # Tageskosten darstellen.
-            st.metric(
-                "💵 Pro Tag",
-                f"CHF {ziel['kosten']}"
-            )
+            # Vier Spalten erstellen.
+            r1, r2, r3, r4 = st.columns(4)
 
 
-        with r4:
+            with r1:
 
-            # Restbudget darstellen.
-            st.metric(
-                "💳 Restbudget",
-                f"CHF {restbudget}"
-            )
+                # Temperatur anzeigen.
+                st.metric(
+                    f"🌡️ Ø {monat_name}",
+                    f"{ziel['temperatur']} °C"
+                )
 
 
-        # Aktivitäts-Tags erzeugen.
-        st.markdown(
-            f"""
-            <div style="margin-top: 0.8rem;">
+            with r2:
 
-                <span class="tag">
-                    🏖 Strand {ziel['strand']}/5
-                </span>
+                # Gesamtkosten anzeigen.
+                st.metric(
+                    "💰 Kosten vor Ort",
+                    f"CHF {ziel['gesamtkosten']}"
+                )
 
-                <span class="tag">
-                    🏛 Kultur {ziel['kultur']}/5
-                </span>
 
-                <span class="tag">
-                    🍜 Essen {ziel['essen']}/5
-                </span>
+            with r3:
 
-                <span class="tag">
-                    🌿 Natur {ziel['natur']}/5
-                </span>
+                # Tageskosten anzeigen.
+                st.metric(
+                    "💵 Pro Tag",
+                    f"CHF {ziel['kosten']}"
+                )
 
-                <span class="tag">
-                    🎉 Nightlife {ziel['nightlife']}/5
-                </span>
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+            with r4:
 
-        # Budgetbestätigung anzeigen.
-        st.markdown(
-            """
-            <div class="budget-ok">
-                ✓ Innerhalb deines maximalen Budgets
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+                # Differenz zum Budget berechnen.
+                budget_differenz = (
+                    max_budget
+                    - ziel["gesamtkosten"]
+                )
 
-        # Abstand zwischen den Resultaten.
-        st.markdown("<br>", unsafe_allow_html=True)
-        
+                # Positives Budget als Restbudget darstellen.
+                if budget_differenz >= 0:
+
+                    st.metric(
+                        "💳 Restbudget",
+                        f"CHF {budget_differenz}"
+                    )
+
+                # Falls Budget nicht zwingend war,
+                # kann die Destination darüber liegen.
+                else:
+
+                    st.metric(
+                        "💳 Über Budget",
+                        f"CHF {abs(budget_differenz)}"
+                    )
+
+
+            # ------------------------------------------------
+            # AKTIVITÄTEN
+            # ------------------------------------------------
+
+            # Kleine Überschrift.
+            st.markdown("**Was dich dort erwartet:**")
+
+            # Fünf Aktivitäts-Spalten.
+            a1, a2, a3, a4, a5 = st.columns(5)
+
+
+            with a1:
+
+                # Strandrating.
+                st.write(
+                    f"🏖️ **Strand**\n\n{ziel['strand']}/5"
+                )
+
+
+            with a2:
+
+                # Kulturrating.
+                st.write(
+                    f"🏛️ **Kultur**\n\n{ziel['kultur']}/5"
+                )
+
+
+            with a3:
+
+                # Essensrating.
+                st.write(
+                    f"🍜 **Essen**\n\n{ziel['essen']}/5"
+                )
+
+
+            with a4:
+
+                # Naturrating.
+                st.write(
+                    f"🌿 **Natur**\n\n{ziel['natur']}/5"
+                )
+
+
+            with a5:
+
+                # Nightliferating.
+                st.write(
+                    f"🎉 **Nightlife**\n\n{ziel['nightlife']}/5"
+                )
+
+
+            # ------------------------------------------------
+            # BUDGET-HINWEIS
+            # ------------------------------------------------
+
+            # Wenn Land innerhalb des Budgets liegt.
+            if ziel["gesamtkosten"] <= max_budget:
+
+                # Positive Meldung.
+                st.success(
+                    "✓ Liegt innerhalb deines angegebenen Budgets."
+                )
+
+            # Falls Budget nicht als zwingend gewählt wurde
+            # und das Land teurer ist.
+            else:
+
+                # Warnung anzeigen.
+                st.warning(
+                    "Dieses Reiseziel liegt etwas über deinem "
+                    "angegebenen Budget."
+                )
